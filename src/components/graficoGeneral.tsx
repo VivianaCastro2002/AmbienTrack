@@ -1,16 +1,36 @@
 'use client'
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'
 import { TrendingUp } from "lucide-react"
-import { chartData, estilosPorParametro } from "@/utils/utilidadesGraficos"
+import { estilosPorParametro } from "@/utils/estilosGraficos"
+import { SimulacionApi, DatoAmbiental, Parametro } from "@/utils/simulacionApi"
 
-export default function GraficoGeneral(param: string){
-      const [selectedParameter, setSelectedParameter] = useState<string>("all")
+export default function GraficoGeneral(){
+      const [selectedParameter, setSelectedParameter] = useState<Parametro>("all")
       const config = estilosPorParametro[selectedParameter] ?? estilosPorParametro["all"]
-      const datos = chartData[selectedParameter] ?? chartData["all"]
+     // const datos = chartData[selectedParameter] ?? chartData["all"]
+
+    const [datos, setDatos] = useState<DatoAmbiental[]>([])
+    const [loading, setLoading] = useState(true)
+ 
+    useEffect(() => {
+    const primerDato = SimulacionApi.generarDato(selectedParameter)
+    setDatos([primerDato])
+    setLoading(false)
+
+    const intervalo = setInterval(() => {
+        setDatos(prev => {
+        const nuevo = SimulacionApi.generarDato(selectedParameter)
+        const actualizados = [...prev, nuevo]
+        return actualizados.length > 10 ? actualizados.slice(-10) : actualizados
+        })
+    }, 3000)
+
+    return () => clearInterval(intervalo)
+    }, [selectedParameter])
 
       const nombresParametros: Record<string, string> = {
         all: "Ambiente General",
@@ -42,7 +62,8 @@ export default function GraficoGeneral(param: string){
                             : `Estado actual de ${nombresParametros[selectedParameter]}`}
                         </CardDescription>
                     </div>
-                    <Select value={selectedParameter} onValueChange={setSelectedParameter}>
+                    <Select value={selectedParameter} onValueChange={(value) => setSelectedParameter(value as Parametro)}>
+
                         <SelectTrigger className="w-[200px]">
                             <SelectValue placeholder="Seleccionar parámetro" />
                         </SelectTrigger>
@@ -58,7 +79,10 @@ export default function GraficoGeneral(param: string){
             </CardHeader>
 
             <CardContent>
-                <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                {loading ? (
+                    <p className="text-muted-foreground">Cargando datos simulados...</p>
+                ) : (
+                <ChartContainer config={chartConfig} className="min-h-[200px] max-h-96 w-full">
                     <LineChart
                         accessibilityLayer
                         data={datos}
@@ -83,13 +107,13 @@ export default function GraficoGeneral(param: string){
                     <Line
                         dataKey="valor"
                         stroke={config.color}
-                        strokeWidth={2}              
+                        strokeWidth={2}
+                        isAnimationActive={false}              
                     />
                     </LineChart>
                 </ChartContainer>
-
+                )}
             </CardContent>
-
         </Card>
     );
 }
