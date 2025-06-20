@@ -12,8 +12,8 @@ export default function DashboardHeader(){
     return(
         <header className="bg-white border-b border-gray-200 px-6 py-4">
             <div className="flex items-center justify-between">
-                <div className="flex items-center justify-between">
-                    <Wind className="h-8 w-8 space-x-4 text-blue-600" />
+                <div className="flex items-center justify-between gap-3">
+                    <Wind className="h-10 w-10 space-x-4 text-blue-600" />
                     <h1 className="text-2xl font-bold text-gray-900">AmbienTrack</h1>
                 </div>        
                     <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
