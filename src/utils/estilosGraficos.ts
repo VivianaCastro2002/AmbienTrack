@@ -8,17 +8,17 @@ const estilosPorParametro: Record<
 > = {
   all: {
     color: "var(--chart-9)",
-    ticks: [0, 25, 50, 75, 100],
+    ticks: [0, 20, 40, 60, 80, 100],
     formato: (value) => `${value}%`
   },
   temperature: {
     color: "var(--chart-1)",
-    ticks: [10, 15, 20, 25, 30, 40],
+    ticks: [0, 10, 20, 30, 40, 50],
     formato: (value) => `${value}°C`
   },
   humidity: {
     color: "var(--chart-6)",
-    ticks: [0, 25, 50, 75, 100],
+    ticks: [0, 20, 40, 60, 80, 100],
     formato: (value) => `${value}%`
   },
   light: {
@@ -33,7 +33,7 @@ const estilosPorParametro: Record<
   },
   airQuality: {
     color: "var(--chart-7)",
-    ticks: [0, 25, 50, 75, 100],
+    ticks: [0, 20, 40, 60, 80, 100],
     formato: (value) => `${value} AQI`
   }
 }

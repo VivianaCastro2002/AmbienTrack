@@ -27,7 +27,7 @@ export default function GraficoGeneral(){
         const actualizados = [...prev, nuevo]
         return actualizados.length > 10 ? actualizados.slice(-10) : actualizados
         })
-    }, 3000)
+    }, 5000)
 
     return () => clearInterval(intervalo)
     }, [selectedParameter])
@@ -82,7 +82,7 @@ export default function GraficoGeneral(){
                 {loading ? (
                     <p className="text-muted-foreground">Cargando datos simulados...</p>
                 ) : (
-                <ChartContainer config={chartConfig} className="min-h-[200px] max-h-96 w-full">
+                <ChartContainer config={chartConfig} className="min-h-[200px] max-h-72 w-full">
                     <LineChart
                         accessibilityLayer
                         data={datos}
