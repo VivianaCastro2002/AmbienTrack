@@ -28,8 +28,8 @@ const estilosPorParametro: Record<
   },
   noise: {
     color: "var(--chart-2)",
-    ticks: [0, 20, 40, 60, 80],
-    formato: (value) => `${value} dB`
+    ticks: [0, 100, 200, 300, 400, 500],
+    formato: (value) => `${value} pdm`
   },
   airQuality: {
     color: "var(--chart-7)",

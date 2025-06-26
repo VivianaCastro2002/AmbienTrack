@@ -23,7 +23,7 @@ export default function Home() {
       }
     }
     fetchDatos();
-    const interval = setInterval(fetchDatos, 5000);
+    const interval = setInterval(fetchDatos, 2000);
     return () => clearInterval(interval);
   }, []);
 

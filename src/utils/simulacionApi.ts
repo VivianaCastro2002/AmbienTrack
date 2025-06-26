@@ -64,8 +64,8 @@ export function obtenerEstadoParametro(parametro: Parametro, valor: number): str
       return "Normal"
 
     case "noise":
-      if (valor > 65) return "Muy alto"
-      if (valor > 45) return "Alto"
+      if (valor > 400) return "Muy alto"
+      if (valor > 200) return "Alto"
       return "Normal"
 
     case "airQuality":

@@ -1,8 +1,6 @@
-'use client'
-import { useState, useEffect } from "react"
 import TarjetaEstado from "@/components/tarjetaEstado";
 import { Thermometer, Droplets, Lightbulb, Volume2, Wind } from "lucide-react";
-import { TelemetriaAmbiental } from "@/lib/thingsboardApi" // nueva API real
+import { TelemetriaAmbiental } from "@/lib/thingsboardApi"
 import { obtenerEstadoParametro, Parametro } from "@/utils/simulacionApi";
 
 interface Props {
@@ -14,7 +12,7 @@ export default function GridTarjetas({ valores }: Props){
     { key: "temperature",  title: "Temperatura", icon:<Thermometer className="w-5 h-5"/>, unidad: "°" },
     { key: "humidity", title: "Humedad", icon:<Droplets className="w-5 h-5"/>, unidad: "%" },
     { key: "light", title: "Iluminación", icon:<Lightbulb className="w-5 h-5"/>, unidad: "lux" },
-    { key: "noise", title: "Ruido", icon:<Volume2 className="w-5 h-5"/>, unidad: "dB" },
+    { key: "noise", title: "Ruido", icon:<Volume2 className="w-5 h-5"/>, unidad: "pdm" },
     { key: "airQuality", title: "Calidad de Aire", icon:<Wind className="w-5 h-5"/>, unidad: "AQ" },
   ];
 
