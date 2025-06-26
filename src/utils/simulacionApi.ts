@@ -59,8 +59,8 @@ export function obtenerEstadoParametro(parametro: Parametro, valor: number): str
     case "light":
       if (valor < 150) return "Muy Bajo"
       if (valor < 300) return "Bajo" //
-      if (valor > 700) return "Alto" //
-      if (valor > 850) return "Muy Alto" //
+      if (valor > 700) return "Alto" 
+      if (valor > 850) return "Muy Alto" 
       return "Normal"
 
     case "noise":
@@ -69,8 +69,8 @@ export function obtenerEstadoParametro(parametro: Parametro, valor: number): str
       return "Normal"
 
     case "airQuality":
-      if (valor > 75) return "Muy bajo"
-      if (valor > 50) return "Bajo"
+      if (valor > 750) return "Muy bajo"
+      if (valor > 1250) return "Bajo"
       return "Normal"
 
     case "all":

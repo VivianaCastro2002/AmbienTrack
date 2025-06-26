@@ -33,7 +33,7 @@ const estilosPorParametro: Record<
   },
   airQuality: {
     color: "var(--chart-7)",
-    ticks: [0, 20, 40, 60, 80, 100],
+    ticks: [200, 600, 1000, 1400],
     formato: (value) => `${value} AQI`
   }
 }
