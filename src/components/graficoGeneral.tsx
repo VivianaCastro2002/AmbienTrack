@@ -1,51 +1,90 @@
 'use client'
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart'
 import { TrendingUp } from "lucide-react"
 import { estilosPorParametro } from "@/utils/estilosGraficos"
-import { SimulacionApi, DatoAmbiental, Parametro } from "@/utils/simulacionApi"
+import { DatoAmbiental, Parametro } from "@/utils/simulacionApi"
+import { TelemetriaAmbiental } from "@/lib/thingsboardApi"
 
-export default function GraficoGeneral(){
-      const [selectedParameter, setSelectedParameter] = useState<Parametro>("all")
-      const config = estilosPorParametro[selectedParameter] ?? estilosPorParametro["all"]
-     // const datos = chartData[selectedParameter] ?? chartData["all"]
+interface Props {
+  valores: TelemetriaAmbiental;
+}
 
-    const [datos, setDatos] = useState<DatoAmbiental[]>([])
-    const [loading, setLoading] = useState(true)
- 
-    useEffect(() => {
-    const primerDato = SimulacionApi.generarDato(selectedParameter)
-    setDatos([primerDato])
-    setLoading(false)
+export default function GraficoGeneral({ valores }: Props){
+    const parametrosDisponibles: Parametro[] = [
+    "temperature",
+    "humidity",
+    "light",
+    "noise",
+    "airQuality"
+    ];
 
-    const intervalo = setInterval(() => {
-        setDatos(prev => {
-        const nuevo = SimulacionApi.generarDato(selectedParameter)
-        const actualizados = [...prev, nuevo]
-        return actualizados.length > 10 ? actualizados.slice(-10) : actualizados
-        })
-    }, 5000)
-
-    return () => clearInterval(intervalo)
-    }, [selectedParameter])
-
-      const nombresParametros: Record<string, string> = {
-        all: "Ambiente General",
+    const nombresParametros: Record<Parametro, string> = {
         temperature: "Temperatura",
         humidity: "Humedad",
         light: "Iluminación",
         noise: "Ruido",
-        airQuality: "Calidad del Aire"
+        airQuality: "Calidad del Aire",
+        all: "Ambiente General",        
+    };
+
+  const [selectedParameter, setSelectedParameter] = useState<Parametro>("temperature");
+  const [loading, setLoading] = useState(true);
+
+  function getHistorial(param: Parametro): DatoAmbiental[] {
+    if (typeof window === "undefined") return [];
+    const raw = sessionStorage.getItem(`historial_${param}`);
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  const [historial, setHistorial] = useState<Record<Parametro, DatoAmbiental[]>>(() => {
+    const inicial: Record<Parametro, DatoAmbiental[]> = {
+      temperature: getHistorial("temperature"),
+      humidity: getHistorial("humidity"),
+      light: getHistorial("light"),
+      noise: getHistorial("noise"),
+      airQuality: getHistorial("airQuality"),
+      all: [],
+    };
+    return inicial;
+  });
+
+  const config = estilosPorParametro[selectedParameter] ?? estilosPorParametro["temperature"];
+
+  useEffect(() => {
+    const now = new Date();
+    const hora = now.toTimeString().slice(0, 5);
+
+    setHistorial(prev => {
+      const actualizado: Record<Parametro, DatoAmbiental[]> = { ...prev };
+      parametrosDisponibles.forEach(param => {
+        const valor = valores[param] ?? 0;
+        const anterior = prev[param] ?? [];
+
+        const nuevos = [...anterior, { hora, valor }];
+        const ultimos = nuevos.length > 10 ? nuevos.slice(-10) : nuevos;
+        actualizado[param] = ultimos;
+  
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(`historial_${param}`, JSON.stringify(ultimos));
         }
+      });
+      return actualizado;
+    });
+    setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [valores]);
+
+  const datos = historial[selectedParameter] ?? [];
 
     const chartConfig = {
-    valor: {
+        valor: {
         label: "Valor",
-    },
-    } satisfies ChartConfig
+        },
+    } satisfies ChartConfig;
 
     return(
         <Card>
@@ -54,24 +93,22 @@ export default function GraficoGeneral(){
                     <div>
                         <CardTitle className="flex items-center ">
                             <TrendingUp className="h-5 w-5 mr-2"/>
-                            {selectedParameter === "all" ? "Vista General del Ambiente" : `Nivel de ${nombresParametros[selectedParameter]}`}
+                            {`Nivel de ${nombresParametros[selectedParameter]}`}
                         </CardTitle>
                         <CardDescription>
-                        {selectedParameter === "all"
-                            ? "Estado ambiental de la sala en tiempo real"
-                            : `Estado actual de ${nombresParametros[selectedParameter]}`}
+                        {`Estado actual de ${nombresParametros[selectedParameter]}`}
                         </CardDescription>
                     </div>
-                    <Select value={selectedParameter} onValueChange={(value) => setSelectedParameter(value as Parametro)}>
 
+                    <Select value={selectedParameter} onValueChange={(value) => setSelectedParameter(value as Parametro)}>
                         <SelectTrigger className="w-[200px]">
                             <SelectValue placeholder="Seleccionar parámetro" />
                         </SelectTrigger>
                     <SelectContent>
-                        {Object.entries(nombresParametros).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                            {label.charAt(0).toUpperCase() + label.slice(1)}
-                        </SelectItem>
+                        {parametrosDisponibles.map((param) => (
+                            <SelectItem key={param} value={param}>
+                            {nombresParametros[param]}
+                            </SelectItem>
                         ))}
                     </SelectContent>                   
                     </Select>
@@ -92,8 +129,7 @@ export default function GraficoGeneral(){
                     <XAxis
                         dataKey="hora"
                         tickLine={false}
-                        tickMargin={8}
-                        tickFormatter={(value)=> value.slice(0.3)}
+                        tickMargin={8}       
                     />
                     <YAxis
                         tickLine={false}
