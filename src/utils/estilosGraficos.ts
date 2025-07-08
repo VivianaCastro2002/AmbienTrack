@@ -1,5 +1,7 @@
+import type { Parametro } from "@/utils/parametros";
+
 const estilosPorParametro: Record<
-  string,
+  Parametro,
   {
     color: string
     ticks: number[]

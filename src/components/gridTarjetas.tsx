@@ -1,7 +1,7 @@
 import TarjetaEstado from "@/components/tarjetaEstado";
 import { Thermometer, Droplets, Lightbulb, Volume2, Wind } from "lucide-react";
 import { TelemetriaAmbiental } from "@/lib/thingsboardApi"
-import { obtenerEstadoParametro, Parametro } from "@/utils/simulacionApi";
+import { obtenerEstadoParametro, Parametro } from "@/utils/parametros";
 
 interface Props {
   valores: TelemetriaAmbiental;
@@ -17,7 +17,7 @@ export default function GridTarjetas({ valores }: Props){
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 pb-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 pb-2">
       {parametros.map((param) => {
         const valorActual = valores[param.key as keyof TelemetriaAmbiental] ?? 0;
         const estadoActual = obtenerEstadoParametro(param.key as Parametro, valorActual);
