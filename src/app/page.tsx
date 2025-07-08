@@ -2,15 +2,19 @@
 import { useState, useEffect } from "react";
 import GridTarjetas from "@/components/gridTarjetas";
 import GraficoGeneral from "@/components/graficoGeneral";
+import Alertas from "@/components/alertas";
 import { obtenerUltimosValores } from "@/lib/thingsboardApi";
 import type { TelemetriaAmbiental } from "@/lib/thingsboardApi";
+import { obtenerEstadoParametro } from "@/utils/simulacionApi";
 
 export default function Home() {
+
   const [valores, setValores] = useState<TelemetriaAmbiental>({
     temperature: 0,
     humidity: 0,
     light: 0,
     noise: 0,
+    airQuality: 0,
   });
 
   useEffect(() => {
@@ -27,12 +31,38 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  const parametros = [
+    { key: "temperature", label: "Temperatura" },
+    { key: "humidity", label: "Humedad" },
+    { key: "light", label: "Iluminación" },
+    { key: "noise", label: "Ruido" },
+    { key: "airQuality", label: "Calidad de aire" },
+  ];
+
+  const mensajesAlerta = parametros.map(param => {
+    const estado = obtenerEstadoParametro(param.key, valores[param.key]);
+    let variant: "advertencia" | "destructiva" = "advertencia";
+    if (estado.toLowerCase().includes("muy")) {
+      variant = "destructiva";
+    }
+    return {
+      mensaje: `${param.label} ${estado.toLowerCase()}`,
+      variant,
+    };
+  });;
+
+
   return (
-    <div className="items-center min-h-full sm:px-6 sm:py-3">
-      <main className="px-6">
+    <main className="items-center min-h-full sm:px-6 sm:py-3">
+      <div className="px-6">
         <GridTarjetas valores={valores} />
         <GraficoGeneral valores={valores} />
-      </main>
-    </div>
+        {mensajesAlerta
+          .filter(alerta => !alerta.mensaje.toLowerCase().includes("normal"))
+          .map((alerta, idx) => (
+            <Alertas key={idx} mensaje={alerta.mensaje} variant={alerta.variant} />
+        ))}
+      </div>
+    </main>
   );
 }
