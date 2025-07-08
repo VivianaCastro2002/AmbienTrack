@@ -43,24 +43,24 @@ export class SimulacionApi {
 export function obtenerEstadoParametro(parametro: Parametro, valor: number): string {
   switch (parametro) {
     case "temperature":
-      if (valor < 10) return "Muy Bajo"
-      if (valor < 18) return "Bajo"
-      if (valor > 35) return "Muy Alto"
-      if (valor > 28) return "Alto"
+      if (valor < 10) return "Muy Baja"
+      if (valor < 18) return "Baja"
+      if (valor > 35) return "Muy Alta"
+      if (valor > 28) return "Alta"
       return "Normal"
 
     case "humidity":
-      if (valor < 15) return "Muy Bajo"
-      if (valor < 30) return "Bajo"
-      if (valor > 85) return "Muy Alto"
-      if (valor > 70) return "Alto"   
+      if (valor < 15) return "Muy Baja"
+      if (valor < 30) return "Baja"
+      if (valor > 85) return "Muy Alta"
+      if (valor > 70) return "Alta"   
       return "Normal"
 
     case "light":
-      if (valor < 150) return "Muy Bajo"
-      if (valor < 300) return "Bajo"
-      if (valor > 850) return "Muy Alto" 
-      if (valor > 700) return "Alto" 
+      if (valor < 150) return "Muy Baja"
+      if (valor < 300) return "Baja"
+      if (valor > 850) return "Muy Alta" 
+      if (valor > 700) return "Alta" 
       return "Normal"
 
     case "noise":
@@ -69,8 +69,8 @@ export function obtenerEstadoParametro(parametro: Parametro, valor: number): str
       return "Normal"
 
     case "airQuality":
-      if (valor > 750) return "Muy bajo"
-      if (valor > 1250) return "Bajo"
+      if (valor > 750) return "Muy baja"
+      if (valor > 1250) return "Baja"
       return "Normal"
 
       default:
@@ -79,18 +79,11 @@ export function obtenerEstadoParametro(parametro: Parametro, valor: number): str
   }
 }
 export function obtenerEstrato(estado: string): 3 | 2 | 1 {
-  switch (estado) {
-    case "Normal":
-      return 3;
-    case "Alto":
-    case "Bajo":
-      return 2;
-    case "Muy Alto":
-    case "Muy Bajo":
-      return 1;
-    default:
-      return 3;
-  }
+  const e = estado.trim().toLowerCase();
+  if (e === "normal") return 3;
+  if (e === "alto" || e === "bajo") return 2;
+  if (e.startsWith("muy")) return 1;
+  return 3;
 }
 
 export function calcularCondicionGeneral(valores: Record<Parametro, number>): number {
