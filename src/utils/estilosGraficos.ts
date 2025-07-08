@@ -6,11 +6,19 @@ const estilosPorParametro: Record<
     formato?: (value: number) => string
   }
 > = {
-  all: {
-    color: "var(--chart-9)",
-    ticks: [0, 20, 40, 60, 80, 100],
-    formato: (value) => `${value}%`
-  },
+all: {
+  color: "#5E60CE",
+  ticks: [1, 1.5, 2, 2.5, 3],
+  formato: (valor: number) => {
+    if (valor >= 2.95) return "Excelente";
+    if (valor >= 2.5) return "Aceptable";
+    if (valor >= 2) return "Regular";
+    if (valor >= 1.5) return "Poco Tol.";
+    if (valor >= 1) return "Mala";
+    return "Indef.";
+  }
+},
+
   temperature: {
     color: "var(--chart-1)",
     ticks: [0, 10, 20, 30, 40, 50],

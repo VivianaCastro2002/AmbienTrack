@@ -8,6 +8,7 @@ import { TrendingUp } from "lucide-react"
 import { estilosPorParametro } from "@/utils/estilosGraficos"
 import { DatoAmbiental, Parametro } from "@/utils/simulacionApi"
 import { TelemetriaAmbiental } from "@/lib/thingsboardApi"
+import { calcularCondicionGeneral } from "@/utils/simulacionApi"
 
 interface Props {
   valores: TelemetriaAmbiental;
@@ -15,11 +16,13 @@ interface Props {
 
 export default function GraficoGeneral({ valores }: Props){
     const parametrosDisponibles: Parametro[] = [
+    "all",
     "temperature",
     "humidity",
     "light",
     "noise",
-    "airQuality"
+    "airQuality",
+    
     ];
 
     const nombresParametros: Record<Parametro, string> = {
@@ -31,7 +34,7 @@ export default function GraficoGeneral({ valores }: Props){
         all: "Ambiente General",        
     };
 
-  const [selectedParameter, setSelectedParameter] = useState<Parametro>("temperature");
+  const [selectedParameter, setSelectedParameter] = useState<Parametro>("all");
   const [loading, setLoading] = useState(true);
 
   function getHistorial(param: Parametro): DatoAmbiental[] {
@@ -54,29 +57,59 @@ export default function GraficoGeneral({ valores }: Props){
 
   const config = estilosPorParametro[selectedParameter] ?? estilosPorParametro["temperature"];
 
+  const nivelCondicion: Record<string, number> = {
+  "Excelente": 5,
+  "Aceptable": 4,
+  "Poco Tolerable": 3,
+  "Mala": 2,
+  "Muy Mala": 1,
+  "Indefinida": 0,
+};
+
+
   useEffect(() => {
-    const now = new Date();
-    const hora = now.toTimeString().slice(0, 5);
+  const now = new Date();
+  const hora = now.toTimeString().slice(0, 5);
 
-    setHistorial(prev => {
-      const actualizado: Record<Parametro, DatoAmbiental[]> = { ...prev };
-      parametrosDisponibles.forEach(param => {
-        const valor = valores[param] ?? 0;
-        const anterior = prev[param] ?? [];
+  setHistorial(prev => {
+    const actualizado: Record<Parametro, DatoAmbiental[]> = { ...prev };
 
-        const nuevos = [...anterior, { hora, valor }];
-        const ultimos = nuevos.length > 10 ? nuevos.slice(-10) : nuevos;
-        actualizado[param] = ultimos;
-  
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem(`historial_${param}`, JSON.stringify(ultimos));
-        }
-      });
-      return actualizado;
+    const nuevoValores: Record<Parametro, number> = {
+      temperature: valores.temperature ?? 0,
+      humidity: valores.humidity ?? 0,
+      light: valores.light ?? 0,
+      noise: valores.noise ?? 0,
+      airQuality: valores.airQuality ?? 0,
+      all: 0, // se calculará más abajo
+    };
+
+    // Calcular condición general
+    const promedioAll = calcularCondicionGeneral(nuevoValores);
+
+    console.log("Promedio de estratos (all):", promedioAll);
+
+    // Asignar promedio al campo "all"
+    nuevoValores.all = promedioAll;
+
+    // Guardar en historial y sessionStorage
+    (Object.keys(nuevoValores) as Parametro[]).forEach(param => {
+      const valor = nuevoValores[param];
+      const anterior = prev[param] ?? [];
+      const nuevos = [...anterior, { hora, valor }];
+      const ultimos = nuevos.length > 10 ? nuevos.slice(-10) : nuevos;
+      actualizado[param] = ultimos;
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(`historial_${param}`, JSON.stringify(ultimos));
+      }
     });
-    setLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [valores]);
+    return actualizado;
+  });
+
+  setLoading(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [valores]);
+
 
   const datos = historial[selectedParameter] ?? [];
 

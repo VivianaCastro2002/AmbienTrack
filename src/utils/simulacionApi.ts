@@ -45,22 +45,22 @@ export function obtenerEstadoParametro(parametro: Parametro, valor: number): str
     case "temperature":
       if (valor < 10) return "Muy Bajo"
       if (valor < 18) return "Bajo"
-      if (valor > 28) return "Alto" //
-      if (valor > 35) return "Muy Alto" //
+      if (valor > 35) return "Muy Alto"
+      if (valor > 28) return "Alto"
       return "Normal"
 
     case "humidity":
       if (valor < 15) return "Muy Bajo"
-      if (valor < 30) return "Bajo" //
-      if (valor > 70) return "Alto" //   
-      if (valor > 85) return "Muy Alto" //
+      if (valor < 30) return "Bajo"
+      if (valor > 85) return "Muy Alto"
+      if (valor > 70) return "Alto"   
       return "Normal"
 
     case "light":
       if (valor < 150) return "Muy Bajo"
-      if (valor < 300) return "Bajo" //
-      if (valor > 700) return "Alto" 
+      if (valor < 300) return "Bajo"
       if (valor > 850) return "Muy Alto" 
+      if (valor > 700) return "Alto" 
       return "Normal"
 
     case "noise":
@@ -73,12 +73,37 @@ export function obtenerEstadoParametro(parametro: Parametro, valor: number): str
       if (valor > 1250) return "Bajo"
       return "Normal"
 
-    case "all":
-    default:
-      if (valor > 75) return "Alerta"
-      if (valor < 25) return "Bajo"
-      return "Estable"
+      default:
+      return "Normal"
+
   }
+}
+export function obtenerEstrato(estado: string): 3 | 2 | 1 {
+  switch (estado) {
+    case "Normal":
+      return 3;
+    case "Alto":
+    case "Bajo":
+      return 2;
+    case "Muy Alto":
+    case "Muy Bajo":
+      return 1;
+    default:
+      return 3;
+  }
+}
+
+export function calcularCondicionGeneral(valores: Record<Parametro, number>): number {
+  const estratos = Object.entries(valores)
+    .filter(([param]) => param !== "all") // Excluye "all" si está presente
+    .map(([param, valor]) => {
+      const estado = obtenerEstadoParametro(param as Parametro, valor);
+      return obtenerEstrato(estado);
+    });
+
+  const suma = estratos.reduce((acc, e) => acc + e, 0);
+  const promedio = estratos.length > 0 ? suma / estratos.length : 3;
+  return Number(promedio.toFixed(2));
 }
 
 
