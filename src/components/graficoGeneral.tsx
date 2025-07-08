@@ -80,18 +80,13 @@ export default function GraficoGeneral({ valores }: Props){
       light: valores.light ?? 0,
       noise: valores.noise ?? 0,
       airQuality: valores.airQuality ?? 0,
-      all: 0, // se calculará más abajo
+      all: 0,
     };
 
-    // Calcular condición general
     const promedioAll = calcularCondicionGeneral(nuevoValores);
 
-    console.log("Promedio de estratos (all):", promedioAll);
-
-    // Asignar promedio al campo "all"
     nuevoValores.all = promedioAll;
 
-    // Guardar en historial y sessionStorage
     (Object.keys(nuevoValores) as Parametro[]).forEach(param => {
       const valor = nuevoValores[param];
       const anterior = prev[param] ?? [];
