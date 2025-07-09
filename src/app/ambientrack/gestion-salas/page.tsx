@@ -36,7 +36,7 @@ export default function GestionSalas() {
   const [salas, setSalas] = useState<Sala[]>([])
   const [modalAbierto, setModalAbierto] = useState(false)
   const [salaEditando, setSalaEditando] = useState<Sala | null>(null)
-  const [formulario, setFormulario] = useState({ nombre: "", parametros: {} as Record<string, ParametroIdeal> })
+  const [formulario, setFormulario] = useState({ nombre: "", parametros: {} as Record<string, ParametroIdeal>, deviceId: "", accessToken: "" })
 
   useEffect(() => {
     cargarSalas()
@@ -79,7 +79,7 @@ export default function GestionSalas() {
       ...sala.parametros
     }
     setSalaEditando(sala)
-    setFormulario({ nombre: sala.nombre, parametros: parametrosCompletos })
+    setFormulario({ nombre: sala.nombre, parametros: parametrosCompletos, deviceId: sala.thingsboard_device_id ?? "", accessToken: sala.thingsboard_access_token ?? "" })
     setModalAbierto(true)
   }
 
@@ -97,7 +97,7 @@ export default function GestionSalas() {
     if (!formulario.nombre) return
 
     if (salaEditando) {
-      await supabase.from("sala").update({ nombre: formulario.nombre }).eq("id", salaEditando.id)
+      await supabase.from("sala").update({ nombre: formulario.nombre, thingsboard_device_id:formulario.deviceId, thingsboard_access_token:formulario.accessToken }).eq("id", salaEditando.id)
       for (const tipo of keysParametros) {
         const p = formulario.parametros[tipo]
         await supabase.from("parametro_sala").upsert({
@@ -108,7 +108,7 @@ export default function GestionSalas() {
         })
       }
     } else {
-      const { data: nuevaSala } = await supabase.from("sala").insert({ nombre: formulario.nombre }).select().single()
+      const { data: nuevaSala } = await supabase.from("sala").insert({ nombre: formulario.nombre, thingsboard_device_id:formulario.deviceId, thingsboard_access_token:formulario.accessToken }).select().single()
       if (nuevaSala) {
         for (const tipo of keysParametros) {
           const p = formulario.parametros[tipo]
@@ -144,6 +144,8 @@ export default function GestionSalas() {
     }))
   }
 
+  
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6 max-w-7xl mx-auto">
@@ -165,6 +167,29 @@ export default function GestionSalas() {
                   <Label htmlFor="nombre">Nombre de la Sala</Label>
                   <Input id="nombre" value={formulario.nombre} onChange={(e) => setFormulario((f) => ({ ...f, nombre: e.target.value }))} />
                 </div>
+                <div className="space-y-2">
+
+                <Label htmlFor="device_id">ID del Dispositivo (ThingsBoard)</Label>
+                <Input
+                  id="device_id"
+                  value={formulario.deviceId ?? ""}
+                  onChange={(e) =>
+                    setFormulario((f) => ({ ...f, deviceId: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="access_token">Access Token del Dispositivo</Label>
+                <Input
+                  id="access_token"
+                  value={formulario.accessToken ?? ""}
+                  onChange={(e) =>
+                    setFormulario((f) => ({ ...f, accessToken: e.target.value }))
+                  }
+                />
+              </div>
+
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Parámetros Ideales</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
