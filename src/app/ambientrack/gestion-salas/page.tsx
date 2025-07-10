@@ -29,13 +29,19 @@ const UNIDADES: Record<string, string> = {
   temperature: "°C",
   humidity: "%",
   light: "lux",
-  noise: "dB",
+  noise: "pdm",
   airQuality: "AQI"
 }
+const NOMBRES_PARAMETROS: Record<string, string> = {
+  temperature: "Temperatura",
+  humidity: "Humedad",
+  light: "Luminosidad",
+  noise: "Ruido",
+  airQuality: "Calidad del Aire"
+}
+
 
 const keysParametros = Object.keys(UNIDADES)
-
-
 
 export default function GestionSalas() {
   const [salas, setSalas] = useState<Sala[]>([])
@@ -94,8 +100,8 @@ export default function GestionSalas() {
       temperature: { min: 20, max: 24, unidad: "°C" },
       humidity: { min: 40, max: 60, unidad: "%" },
       light: { min: 300, max: 500, unidad: "lux" },
-      noise: { min: 0, max: 50, unidad: "pdm" },
-      airQuality: { min: 0, max: 50, unidad: "AQI" }
+      noise: { min: 0, max: 200, unidad: "pdm" },
+      airQuality: { min: 0, max: 750, unidad: "AQI" }
     }
   }
 
@@ -203,7 +209,7 @@ export default function GestionSalas() {
                       <Card key={tipo}>
                         <CardHeader className="pb-3">
                           <CardTitle className="text-sm capitalize">
-                            {tipo === "airQuality" ? "Calidad del Aire" : tipo}
+                            {NOMBRES_PARAMETROS[tipo]}
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
