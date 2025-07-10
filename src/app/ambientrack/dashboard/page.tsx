@@ -7,6 +7,7 @@ import GridTarjetas from "@/components/gridTarjetas"
 import { obtenerUltimosValores, TelemetriaAmbiental } from "@/lib/thingsboardApi"
 import GraficoGeneral from "@/components/graficoGeneral"
 import { Parametro, DatoAmbiental, calcularCondicionGeneral } from "@/utils/parametros"
+import Alertas from "@/components/alertas"
 
 export default function Dashboard() {
     const searchParams = useSearchParams()
@@ -47,7 +48,7 @@ export default function Dashboard() {
           nuevoHistorial[param] = [
             ...prev[param],
             { hora: timestamp, valor: datos[param] }
-          ].slice(-20);
+          ].slice(-12);
         }
       });
 
@@ -60,7 +61,7 @@ export default function Dashboard() {
         nuevoHistorial["all"] = [
             ...prev["all"],
             { hora: timestamp, valor: promedioCondicion }
-        ].slice(-20);
+        ].slice(-12);
         }
         console.log("Historial actualizado:", nuevoHistorial["all"]);
       return nuevoHistorial;
@@ -142,6 +143,7 @@ export default function Dashboard() {
             setHistorial={setHistorial}
         />
         )}
+        <Alertas></Alertas>
       </div>
     </main>
   )
