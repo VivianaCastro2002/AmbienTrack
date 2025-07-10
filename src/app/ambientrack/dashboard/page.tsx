@@ -154,6 +154,27 @@ export default function Dashboard() {
     }
   }, [salaId])
 
+  useEffect(() => {
+    if (!valores || !rangosIdeales) return;
+
+    const timestamp = new Date().toLocaleTimeString("es-CL", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+
+    const datosSinAll = Object.fromEntries(
+      Object.entries(valores).filter(([key]) => key !== "all")
+    ) as Record<Parametro, number>;
+
+    const promedioCondicion = calcularCondicionGeneral(datosSinAll, rangosIdeales);
+
+    setHistorial((prev): Record<Parametro, DatoAmbiental[]> => ({
+      ...prev,
+      all: [...prev.all, promedioCondicion].slice(-12),
+    }));
+  }, [valores, rangosIdeales]);
+
   // --- Lógica de alertas adaptada ---
   function getAlerta(param: { key: Exclude<Parametro, "all">; label: string }) {
     if (!valores || !rangosIdeales) return null;
