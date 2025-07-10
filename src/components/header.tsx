@@ -58,7 +58,8 @@ export default function DashboardHeader() {
                 <User className="h-4 w-4" />
                 <div className="flex flex-col items-start">
                   <span className="text-sm font-medium">{user.name}</span>
-                  <span className="text-xs text-gray-500 capitalize">{user.role}</span>
+                  {/* <span className="text-xs text-gray-500 capitalize">{user.role}</span>s */}
+                   
                 </div>
                 {isDropdownOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </Button>
