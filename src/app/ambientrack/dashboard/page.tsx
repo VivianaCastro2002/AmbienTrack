@@ -227,7 +227,7 @@ export default function Dashboard() {
   return (
     <main className="items-center min-h-full sm:px-6 sm:py-3">
       <div className="px-6">
-        <Breadcrumb className="py-4">
+        <Breadcrumb className="py-2">
           <BreadcrumbList>
             <BreadcrumbItem >
               <BreadcrumbLink href="/ambientrack/gestion-salas">Gestión Salas</BreadcrumbLink>
