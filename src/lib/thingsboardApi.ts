@@ -1,9 +1,9 @@
-const TOKEN_THINGSBOARD = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ2LmNhc3RybzA1QHVmcm9tYWlsLmNsIiwidXNlcklkIjoiNThhNWI4MzAtNDE5YS0xMWYwLWE3NjAtYzM0YjgzMzY4NjEyIiwic2NvcGVzIjpbIlRFTkFOVF9BRE1JTiJdLCJzZXNzaW9uSWQiOiIwYjNjN2MyOS1lNjdlLTQxODUtYTAwMC1mNTEwZWNhYWY5OWEiLCJleHAiOjE3NTE5NDUyMzEsImlzcyI6InRoaW5nc2JvYXJkLmlvIiwiaWF0IjoxNzUxOTM2MjMxLCJmaXJzdE5hbWUiOiJWaXZpYW5hIiwibGFzdE5hbWUiOiJDYXN0cm8iLCJlbmFibGVkIjp0cnVlLCJpc1B1YmxpYyI6ZmFsc2UsInRlbmFudElkIjoiOGUxZDM0MjAtNDE5MC0xMWYwLWE3NjAtYzM0YjgzMzY4NjEyIiwiY3VzdG9tZXJJZCI6IjEzODE0MDAwLTFkZDItMTFiMi04MDgwLTgwODA4MDgwODA4MCJ9.By4pUUf9jDeNj5png8Jc4WvZNS5kelS-xB4DBKF-9DXNS_kjuhwmUia48ee0ok-5-yWiOs5APBHOkJeU-Ni5Iw"
-const BASE_URL = "http://iot.ceisufro.cl:8080";
-const DEVICE_ID = "6df1cc90-470f-11f0-a76f-af9873efe2ab"; 
+const TB_BASE_URL = "http://iot.ceisufro.cl:8080";
+const TB_USERNAME = "v.castro05@ufromail.cl"; // Reemplaza por tu correo
+const TB_PASSWORD = "Vivi2002";         // Reemplaza por tu contraseña
+const KEYS = "temperature,humidity,light,noise,eCO2,TVOC";
 
-
-// Tipos de datos
+// Tipo de datos retornados
 export interface TelemetriaAmbiental {
   temperature: number;
   humidity: number;
@@ -12,33 +12,92 @@ export interface TelemetriaAmbiental {
   airQuality: number;
 }
 
-// Función para obtener los últimos valores de telemetría
-export async function obtenerUltimosValores(): Promise<TelemetriaAmbiental> {
-  const url = `${BASE_URL}/api/plugins/telemetry/DEVICE/${DEVICE_ID}/values/timeseries?keys=temperature,humidity,lux,noise`;
+// Estado en memoria
+let authToken: string | null = null;
+let refreshToken: string | null = null;
+let tokenExpiraEn: number = 0; // timestamp en ms
 
-  const res = await fetch(url, {
+// Función para hacer login
+async function loginThingsBoard(): Promise<void> {
+  const res = await fetch(`${TB_BASE_URL}/api/auth/login`, {
+    method: "POST",
     headers: {
-      Authorization: `Bearer ${TOKEN_THINGSBOARD}`,
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify({
+      username: TB_USERNAME,
+      password: TB_PASSWORD
+    })
+  });
+
+  if (!res.ok) throw new Error("Login ThingsBoard fallido");
+
+  const data = await res.json();
+  authToken = data.token;
+  refreshToken = data.refreshToken;
+  tokenExpiraEn = Date.now() + 14 * 60 * 1000; // 14 minutos de validez
+}
+
+// Función para refrescar el token
+async function refrescarToken(): Promise<void> {
+  if (!refreshToken) return loginThingsBoard(); // fallback
+
+  const res = await fetch(`${TB_BASE_URL}/api/auth/token`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Authorization": `Bearer ${authToken}`
+    },
+    body: JSON.stringify({
+      refreshToken: refreshToken
+    })
+  });
+
+  if (!res.ok) return loginThingsBoard(); // fallback a nuevo login si falla
+
+  const data = await res.json();
+  authToken = data.token;
+  refreshToken = data.refreshToken;
+  tokenExpiraEn = Date.now() + 14 * 60 * 1000;
+}
+
+// Función que garantiza que haya un token válido
+async function asegurarTokenValido(): Promise<void> {
+  if (!authToken || Date.now() > tokenExpiraEn) {
+    if (refreshToken) {
+      await refrescarToken();
+    } else {
+      await loginThingsBoard();
+    }
+  }
+}
+
+// Función principal para obtener telemetría
+export async function obtenerUltimosValores(deviceId: string): Promise<TelemetriaAmbiental> {
+  await asegurarTokenValido();
+
+  const res = await fetch(`${TB_BASE_URL}/api/plugins/telemetry/DEVICE/${deviceId}/values/timeseries?keys=${KEYS}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Authorization": `Bearer ${authToken}`
     }
   });
 
-  if (!res.ok) {
-    throw new Error("Error al obtener datos de ThingsBoard");
-  }
+  if (!res.ok) throw new Error("Error al obtener datos de ThingsBoard");
 
   const data = await res.json();
 
-  const eco2 = parseFloat(data.eco2?.[0]?.value ?? "0");
-  const tvoc = parseFloat(data.tvoc?.[0]?.value ?? "0");
-
+  const eco2 = parseFloat(data.eCO2?.[0]?.value ?? "0");
+  const tvoc = parseFloat(data.TVOC?.[0]?.value ?? "0");
   const airQuality = (eco2 + tvoc) / 2;
 
   return {
     temperature: parseFloat(data.temperature?.[0]?.value ?? "0"),
     humidity: parseFloat(data.humidity?.[0]?.value ?? "0"),
-    light: parseFloat(data.lux?.[0]?.value ?? "0"),
+    light: parseFloat(data.light?.[0]?.value ?? "0"),
     noise: parseFloat(data.noise?.[0]?.value ?? "0"),
-    airQuality: parseFloat(data.noise?.[0]?.value ?? "0")
+    airQuality
   };
 }

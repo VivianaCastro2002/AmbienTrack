@@ -38,7 +38,7 @@ export default function GraficoGeneral({ valores, historial }: Props) {
 
   const config = estilosPorParametro[selectedParameter] ?? estilosPorParametro["temperature"];
   const datos = historial[selectedParameter] ?? [];
-
+  
   const chartConfig = {
     valor: {
       label: "Valor",

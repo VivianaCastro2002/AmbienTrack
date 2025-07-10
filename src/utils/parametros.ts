@@ -1,3 +1,10 @@
+import { estilosPorParametro } from "./estilosGraficos";
+
+export interface DatoAmbiental {
+  hora: string;
+  valor: number;
+}
+
 export type Parametro =
   | "temperature"
   | "humidity"
@@ -15,37 +22,21 @@ export const NOMBRES_PARAMETROS: Record<Parametro, string> = {
   all: "Ambiente General",
 };
 
-export function obtenerEstadoParametro(parametro: Parametro, valor: number): string {
-  switch (parametro) {
-    case "temperature":
-      if (valor < 10) return "Muy Baja";
-      if (valor < 18) return "Baja";
-      if (valor > 35) return "Muy Alta";
-      if (valor > 28) return "Alta";
-      return "Normal";
-    case "humidity":
-      if (valor < 15) return "Muy Baja";
-      if (valor < 30) return "Baja";
-      if (valor > 85) return "Muy Alta";
-      if (valor > 70) return "Alta";
-      return "Normal";
-    case "light":
-      if (valor < 150) return "Muy Baja";
-      if (valor < 300) return "Baja";
-      if (valor > 850) return "Muy Alta";
-      if (valor > 700) return "Alta";
-      return "Normal";
-    case "noise":
-      if (valor > 400) return "Muy Alta";
-      if (valor > 200) return "Alta";
-      return "Normal";
-    case "airQuality":
-      if (valor > 750) return "Muy Baja";
-      if (valor > 1250) return "Baja";
-      return "Normal";
-    default:
-      return "Normal";
-  }
+export function evaluarParametro(
+  valor: number,
+  idealMin: number,
+  idealMax: number,
+  minGrafico: number,
+  maxGrafico: number
+): string {
+  const limiteInferior = (idealMin + minGrafico) / 2
+  const limiteSuperior = (idealMax + maxGrafico) / 2
+
+  if (valor < limiteInferior) return "Muy Baja"
+  if (valor < idealMin) return "Baja"
+  if (valor <= idealMax) return "Normal"
+  if (valor <= limiteSuperior) return "Alta"
+  return "Muy Alta"
 }
 
 export function obtenerEstrato(estado: string): 3 | 2 | 1 {
@@ -56,11 +47,27 @@ export function obtenerEstrato(estado: string): 3 | 2 | 1 {
   return 3;
 }
 
-export function calcularCondicionGeneral(valores: Record<Parametro, number>): number {
+interface RangoIdeal {
+  min: number
+  max: number
+}
+
+interface RangoGrafico {
+  min: number
+  max: number
+}
+
+export function calcularCondicionGeneral(valores: Record<Parametro, number>, rangosIdeales: Record<Parametro, RangoIdeal>): number {
   const estratos = Object.entries(valores)
     .filter(([param]) => param !== "all")
     .map(([param, valor]) => {
-      const estado = obtenerEstadoParametro(param as Parametro, valor);
+      const p = param as Parametro;
+      const { min: idealMin, max: idealMax } = rangosIdeales[p];
+      const ticks = estilosPorParametro[p].ticks;
+      const minGrafico = Math.min(...ticks);
+      const maxGrafico = Math.max(...ticks);
+
+      const estado = evaluarParametro(valor, idealMin, idealMax, minGrafico, maxGrafico);
       return obtenerEstrato(estado);
     });
   const suma = estratos.reduce((acc, e) => acc + e, 0);
