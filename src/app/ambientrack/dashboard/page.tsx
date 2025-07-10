@@ -12,14 +12,7 @@ import { estilosPorParametro } from "@/utils/estilosGraficos"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Recomendaciones from "@/components/recomendaciones";
 import { recomendacionesPorParametro } from "@/utils/recomendacionesData";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,} from "@/components/ui/breadcrumb"
 
 
 const PARAMETROS: { key: Exclude<Parametro, "all">; label: string }[] = [
@@ -75,7 +68,6 @@ export default function Dashboard() {
         }
       });
 
-      // Actualizar promedio general (all)
         if (rangosIdeales) {
         const datosSinAll = Object.fromEntries(
         Object.entries(datos).filter(([key]) => key !== "all")
@@ -115,7 +107,6 @@ export default function Dashboard() {
 
     setNombreSala(data.nombre || "");
 
-    // Convertir los rangos ideales desde la base de datos
     const nuevosRangos: Record<Parametro, { min: number; max: number }> = {
         temperature: { min: 0, max: 0 },
         humidity: { min: 0, max: 0 },
@@ -141,7 +132,7 @@ export default function Dashboard() {
     setRangosIdeales(nuevosRangos);
 
     
-    await obtenerYActualizarDatos(); // primera carga
+    await obtenerYActualizarDatos();
 
     intervalo = setInterval(obtenerYActualizarDatos, 3000);
     };
@@ -175,7 +166,7 @@ export default function Dashboard() {
     }));
   }, [valores, rangosIdeales]);
 
-  // --- Lógica de alertas adaptada ---
+
   function getAlerta(param: { key: Exclude<Parametro, "all">; label: string }) {
     if (!valores || !rangosIdeales) return null;
     const valor = valores[param.key];
@@ -200,7 +191,7 @@ export default function Dashboard() {
         .sort((a, b) => (a && b && a.variant === "destructiva" ? -1 : 1))
     : [];
 
-  // --- Lógica de recomendaciones ---
+
   function getRecomendacion(param: { key: Exclude<Parametro, "all">; label: string }) {
     if (!valores || !rangosIdeales) return null;
     const valor = valores[param.key];
@@ -256,7 +247,6 @@ export default function Dashboard() {
                 setHistorial={setHistorial}
               />
             )}
-            {/* Renderizado de alertas */}
             {mensajesAlerta.map((alerta, idx) => (
               alerta && (
                 <Alertas

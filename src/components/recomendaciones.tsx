@@ -6,15 +6,13 @@ interface Recomendacion {
   critica: boolean;
 }
 
-// Recibe las recomendaciones como prop
 export default function Recomendaciones({ recomendaciones }: { recomendaciones: Recomendacion[] }) {
-  // Separa en críticas y advertencias
   const criticas = recomendaciones.filter(r => r.critica);
   const advertencias = recomendaciones.filter(r => !r.critica);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Columna de acciones críticas */}
+
       <div>
         <Card>
           <CardHeader>
@@ -39,7 +37,6 @@ export default function Recomendaciones({ recomendaciones }: { recomendaciones: 
         </Card>
       </div>
 
-      {/* Columna de recomendaciones */}
       <div>
         <Card>
           <CardHeader>

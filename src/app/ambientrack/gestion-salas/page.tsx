@@ -156,8 +156,6 @@ export default function GestionSalas() {
     }))
   }
 
-  
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6 max-w-7xl mx-auto">

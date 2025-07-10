@@ -3,7 +3,6 @@ const TB_USERNAME = process.env.NEXT_PUBLIC_TB_USERNAME!;
 const TB_PASSWORD = process.env.NEXT_PUBLIC_TB_PASSWORD!;
 const KEYS = "temperature,humidity,lux,noise,eCO2,TVOC";
 
-// Tipo de datos retornados
 export interface TelemetriaAmbiental {
   temperature: number;
   humidity: number;
@@ -12,12 +11,11 @@ export interface TelemetriaAmbiental {
   airQuality: number;
 }
 
-// Estado en memoria
 let authToken: string | null = null;
 let refreshToken: string | null = null;
-let tokenExpiraEn: number = 0; // timestamp en ms
+let tokenExpiraEn: number = 0; 
 
-// Función para hacer login
+
 async function loginThingsBoard(): Promise<void> {
   const res = await fetch(`${TB_BASE_URL}/api/auth/login`, {
     method: "POST",
@@ -36,12 +34,11 @@ async function loginThingsBoard(): Promise<void> {
   const data = await res.json();
   authToken = data.token;
   refreshToken = data.refreshToken;
-  tokenExpiraEn = Date.now() + 14 * 60 * 1000; // 14 minutos de validez
+  tokenExpiraEn = Date.now() + 14 * 60 * 1000; 
 }
 
-// Función para refrescar el token
 async function refrescarToken(): Promise<void> {
-  if (!refreshToken) return loginThingsBoard(); // fallback
+  if (!refreshToken) return loginThingsBoard();
 
   const res = await fetch(`${TB_BASE_URL}/api/auth/token`, {
     method: "POST",
@@ -54,7 +51,7 @@ async function refrescarToken(): Promise<void> {
     })
   });
 
-  if (!res.ok) return loginThingsBoard(); // fallback a nuevo login si falla
+  if (!res.ok) return loginThingsBoard();
 
   const data = await res.json();
   authToken = data.token;
@@ -62,7 +59,7 @@ async function refrescarToken(): Promise<void> {
   tokenExpiraEn = Date.now() + 14 * 60 * 1000;
 }
 
-// Función que garantiza que haya un token válido
+
 async function asegurarTokenValido(): Promise<void> {
   if (!authToken || Date.now() > tokenExpiraEn) {
     if (refreshToken) {
@@ -73,7 +70,6 @@ async function asegurarTokenValido(): Promise<void> {
   }
 }
 
-// Función principal para obtener telemetría
 export async function obtenerUltimosValores(deviceId: string): Promise<TelemetriaAmbiental> {
   await asegurarTokenValido();
 
