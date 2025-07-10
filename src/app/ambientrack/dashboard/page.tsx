@@ -1,167 +1,148 @@
-'use client'
-import { useState, useEffect, useCallback } from "react";
-import GridTarjetas from "@/components/gridTarjetas";
-import GraficoGeneral from "@/components/graficoGeneral";
-import Alertas from "@/components/alertas";
-import { obtenerUltimosValores } from "@/lib/thingsboardApi";
-import type { TelemetriaAmbiental } from "@/lib/thingsboardApi";
-import { obtenerEstadoParametro, calcularCondicionGeneral, Parametro, DatoAmbiental } from "@/utils/parametros";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Recomendaciones from "@/components/ui/recomendaciones";
-import { recomendacionesPorParametro } from "@/utils/recomendacionesData";
+"use client"
 
-const PARAMETROS = [
-  { key: "temperature", label: "Temperatura" },
-  { key: "humidity", label: "Humedad" },
-  { key: "light", label: "Iluminación" },
-  { key: "noise", label: "Ruido" },
-  { key: "airQuality", label: "Calidad de aire" },
-];
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { supabase } from "@/lib/supabaseClient"
+import GridTarjetas from "@/components/gridTarjetas"
+import { obtenerUltimosValores, TelemetriaAmbiental } from "@/lib/thingsboardApi"
+import GraficoGeneral from "@/components/graficoGeneral"
+import { Parametro, DatoAmbiental, calcularCondicionGeneral } from "@/utils/parametros"
 
-export default function Home() {
-  const [valores, setValores] = useState<TelemetriaAmbiental>({
-    temperature: 0,
-    humidity: 0,
-    light: 0,
-    noise: 0,
-    airQuality: 0,
-  });
+export default function Dashboard() {
+    const searchParams = useSearchParams()
+    const salaId = searchParams.get("sala")
+    const [valores, setValores] = useState<TelemetriaAmbiental | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [historial, setHistorial] = useState<Record<Parametro, DatoAmbiental[]>>({
+    temperature: [],
+    humidity: [],
+    light: [],
+    noise: [],
+    airQuality: [],
+    all: [],
+    });
+    const [rangosIdeales, setRangosIdeales] = useState<Record<Parametro, { min: number; max: number }>>()
 
-  const [tab, setTab] = useState("general");
-
-  // --- HISTORIAL CENTRALIZADO ---
-  function getHistorial(param: Parametro): DatoAmbiental[] {
-    if (typeof window === "undefined") return [];
-    const raw = sessionStorage.getItem(`historial_${param}`);
-    return raw ? JSON.parse(raw) : [];
-  }
-
-  const [historial, setHistorial] = useState<Record<Parametro, DatoAmbiental[]>>(() => {
-    const inicial: Record<Parametro, DatoAmbiental[]> = {
-      temperature: getHistorial("temperature"),
-      humidity: getHistorial("humidity"),
-      light: getHistorial("light"),
-      noise: getHistorial("noise"),
-      airQuality: getHistorial("airQuality"),
-      all: [],
-    };
-    return inicial;
-  });
-
-  // Actualiza historial cada vez que llegan nuevos valores
   useEffect(() => {
-    const now = new Date();
-    const hora = now.toTimeString().slice(0, 5);
+    let intervalo: NodeJS.Timeout
+    let deviceId: string | null = null
 
-    setHistorial(prev => {
-      const actualizado: Record<Parametro, DatoAmbiental[]> = { ...prev };
+    const obtenerYActualizarDatos = async () => {
+      if (!deviceId) return
+      try {
+        const datos = await obtenerUltimosValores(deviceId)
+        setValores(datos)
+        
+    const timestamp = new Date().toLocaleTimeString("es-CL", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
 
-      const nuevoValores: Record<Parametro, number> = {
-        temperature: valores.temperature ?? 0,
-        humidity: valores.humidity ?? 0,
-        light: valores.light ?? 0,
-        noise: valores.noise ?? 0,
-        airQuality: valores.airQuality ?? 0,
-        all: 0,
-      };
+    setHistorial((prev) => {
+      const nuevoHistorial = { ...prev };
 
-      // Calcula el promedio de estratos para "all"
-      const promedioAll = calcularCondicionGeneral(nuevoValores);
-      nuevoValores.all = promedioAll;
-
-      (Object.keys(nuevoValores) as Parametro[]).forEach(param => {
-        const valor = nuevoValores[param];
-        const anterior = prev[param] ?? [];
-        const nuevos = [...anterior, { hora, valor }];
-        const ultimos = nuevos.length > 10 ? nuevos.slice(-10) : nuevos;
-        actualizado[param] = ultimos;
-
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem(`historial_${param}`, JSON.stringify(ultimos));
+      (Object.keys(datos) as Parametro[]).forEach((param) => {
+        if (param !== "all") {
+          nuevoHistorial[param] = [
+            ...prev[param],
+            { hora: timestamp, valor: datos[param] }
+          ].slice(-20);
         }
       });
-      return actualizado;
-    });
-  }, [valores]);
 
-  // Fetch de datos
-  useEffect(() => {
-    async function fetchDatos() {
-      try {
-        const reales = await obtenerUltimosValores();
-        setValores(reales);
-      } catch (error) {
-        console.error("Error al obtener datos desde ThingsBoard:", error);
+      // Actualizar promedio general (all)
+        if (rangosIdeales) {
+        const datosSinAll = Object.fromEntries(
+        Object.entries(datos).filter(([key]) => key !== "all")
+        ) as Record<Parametro, number>;
+        const promedioCondicion = calcularCondicionGeneral(datosSinAll, rangosIdeales);
+        nuevoHistorial["all"] = [
+            ...prev["all"],
+            { hora: timestamp, valor: promedioCondicion }
+        ].slice(-20);
+        }
+        console.log("Historial actualizado:", nuevoHistorial["all"]);
+      return nuevoHistorial;
+    });
+
+
+      } catch (err) {
+        console.error("Error al obtener datos de ThingsBoard:", err)
+      } finally {
+        setLoading(false)
       }
     }
-    fetchDatos();
-    const interval = setInterval(fetchDatos, 2000);
-    return () => clearInterval(interval);
-  }, []);
 
-  // Función auxiliar para obtener el estado y tipo de alerta
-  const getAlerta = useCallback((param: { key: string; label: string }) => {
-    const estado = obtenerEstadoParametro(param.key, valores[param.key]);
-    const estadoLower = estado.toLowerCase();
-    let variant: "advertencia" | "destructiva" = "advertencia";
-    if (estadoLower.includes("muy")) variant = "destructiva";
-    return {
-      mensaje: `${param.label} ${estadoLower}`,
-      variant,
-      mostrar: estadoLower !== "normal",
-    };
-  }, [valores]);
+    const iniciarActualizacion = async () => {
+    if (!salaId) return;
 
-  // Función auxiliar para recomendaciones
-  const getRecomendacion = useCallback((param: { key: string; label: string }) => {
-    const estado = obtenerEstadoParametro(param.key, valores[param.key]).toLowerCase();
-    const acciones = recomendacionesPorParametro[param.key]?.[estado];
-    if (acciones && acciones.length > 0) {
-      return {
-        titulo: `${param.label} ${estado}`,
-        acciones,
-        critica: estado.includes("muy"),
-      };
+    const { data, error } = await supabase
+        .from("sala")
+        .select(`thingsboard_device_id,parametro_sala (tipo, valor_min, valor_max)`)
+        .eq("id", salaId)
+        .single();
+
+    if (error || !data?.thingsboard_device_id) {
+        console.error("Error al obtener el deviceId:", error);
+        setLoading(false);
+        return;
     }
-    return null;
-  }, [valores]);
 
-  // Arrays finales
-  const mensajesAlerta = PARAMETROS.map(getAlerta)
-    .filter(alerta => alerta.mostrar)
-    .sort((a, b) => (a.variant === "destructiva" ? -1 : 1));
+    // Convertir los rangos ideales desde la base de datos
+    const nuevosRangos: Record<Parametro, { min: number; max: number }> = {
+        temperature: { min: 0, max: 0 },
+        humidity: { min: 0, max: 0 },
+        light: { min: 0, max: 0 },
+        noise: { min: 0, max: 0 },
+        airQuality: { min: 0, max: 0 },
+        all: { min: 0, max: 0 },
+    };
 
-  const recomendaciones = PARAMETROS.map(getRecomendacion).filter(Boolean);
+    if (data.parametro_sala) {
+        for (const p of data.parametro_sala) {
+        const tipo = p.tipo as Parametro;
+        if (nuevosRangos[tipo]) {
+            nuevosRangos[tipo] = {
+            min: p.valor_min,
+            max: p.valor_max,
+            };
+        }
+        }
+    }
+
+    deviceId = data.thingsboard_device_id;
+    setRangosIdeales(nuevosRangos);
+
+    
+    await obtenerYActualizarDatos(); // primera carga
+
+    intervalo = setInterval(obtenerYActualizarDatos, 3000);
+    };
+
+
+    iniciarActualizacion()
+
+    return () => {
+      if (intervalo) clearInterval(intervalo)
+    }
+  }, [salaId])
 
   return (
     <main className="items-center min-h-full sm:px-6 sm:py-3">
       <div className="px-6">
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="w-full px-6">
-            <TabsTrigger value="general">Vista General</TabsTrigger>
-            <TabsTrigger value="recomendaciones">Recomendaciones</TabsTrigger>
-          </TabsList>
-          <TabsContent value="general">
-            <GridTarjetas valores={valores} />
-            <GraficoGeneral
-              valores={valores}
-              historial={historial}
-              setHistorial={setHistorial}
-            />
-            {mensajesAlerta.map((alerta, idx) => (
-              <Alertas
-                key={idx}
-                mensaje={alerta.mensaje}
-                variant={alerta.variant}
-                onVerRecomendaciones={() => setTab("recomendaciones")}
-              />
-            ))}
-          </TabsContent>
-          <TabsContent value="recomendaciones">
-            <Recomendaciones recomendaciones={recomendaciones} />
-          </TabsContent>
-        </Tabs>
+        {loading && <p>Cargando datos...</p>}
+        {!loading && valores && rangosIdeales && (
+        <GridTarjetas valores={valores} rangosIdeales={rangosIdeales} />
+        )}
+        {!loading && valores && rangosIdeales && (
+        <GraficoGeneral
+            valores={valores}
+            historial={historial}
+            setHistorial={setHistorial}
+        />
+        )}
       </div>
     </main>
-  );
+  )
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -20,6 +21,8 @@ interface Sala {
   id: string
   nombre: string
   parametros: Record<string, ParametroIdeal>
+  thingsboard_device_id?: string
+  thingsboard_access_token?: string
 }
 
 const UNIDADES: Record<string, string> = {
@@ -32,18 +35,21 @@ const UNIDADES: Record<string, string> = {
 
 const keysParametros = Object.keys(UNIDADES)
 
+
+
 export default function GestionSalas() {
   const [salas, setSalas] = useState<Sala[]>([])
   const [modalAbierto, setModalAbierto] = useState(false)
   const [salaEditando, setSalaEditando] = useState<Sala | null>(null)
   const [formulario, setFormulario] = useState({ nombre: "", parametros: {} as Record<string, ParametroIdeal>, deviceId: "", accessToken: "" })
+  const router = useRouter()
 
   useEffect(() => {
     cargarSalas()
   }, [])
 
   const cargarSalas = async () => {
-    const { data: salasRaw } = await supabase.from("sala").select("id, nombre")
+    const { data: salasRaw } = await supabase.from("sala").select("id, nombre, thingsboard_device_id, thingsboard_access_token")
     if (!salasRaw) return
 
     const salasConParametros: Sala[] = []
@@ -62,7 +68,7 @@ export default function GestionSalas() {
         }
       })
 
-      salasConParametros.push({ id: sala.id, nombre: sala.nombre, parametros: paramObj })
+      salasConParametros.push({ id: sala.id, nombre: sala.nombre, parametros: paramObj, thingsboard_device_id: sala.thingsboard_device_id, thingsboard_access_token: sala.thingsboard_access_token })
     }
     setSalas(salasConParametros)
   }
@@ -233,15 +239,15 @@ export default function GestionSalas() {
 
         <div className="grid gap-6">
           {salas.map((sala) => (
-            <Card key={sala.id}>
+            <Card key={sala.id} className="cursor-pointer hover:shadow-lg" onClick={() => router.push(`/ambientrack/dashboard?sala=${sala.id}`)}>
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-xl">{sala.nombre}</CardTitle>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => abrirModalEditar(sala)}>
+                    <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); abrirModalEditar(sala); }}>
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => eliminarSala(sala.id)} className="text-red-600 hover:text-red-700">
+                    <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); eliminarSala(sala.id); }} className="text-red-600 hover:text-red-700">
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
