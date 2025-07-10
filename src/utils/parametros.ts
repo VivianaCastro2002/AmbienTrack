@@ -57,7 +57,10 @@ interface RangoGrafico {
   max: number
 }
 
-export function calcularCondicionGeneral(valores: Record<Parametro, number>, rangosIdeales: Record<Parametro, RangoIdeal>): number {
+export function calcularCondicionGeneral(
+  valores: Record<Parametro, number>,
+  rangosIdeales: Record<Parametro, RangoIdeal>
+): DatoAmbiental {
   const estratos = Object.entries(valores)
     .filter(([param]) => param !== "all")
     .map(([param, valor]) => {
@@ -72,5 +75,9 @@ export function calcularCondicionGeneral(valores: Record<Parametro, number>, ran
     });
   const suma = estratos.reduce((acc, e) => acc + e, 0);
   const promedio = estratos.length > 0 ? suma / estratos.length : 3;
-  return Number(promedio.toFixed(2));
+
+  return {
+    hora: new Date().toISOString().slice(11, 16),
+    valor: Number(promedio.toFixed(2)),
+  };
 }
