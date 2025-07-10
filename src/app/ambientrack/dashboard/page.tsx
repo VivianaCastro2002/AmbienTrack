@@ -16,7 +16,7 @@ import { recomendacionesPorParametro } from "@/utils/recomendacionesData";
 const PARAMETROS: { key: Exclude<Parametro, "all">; label: string }[] = [
   { key: "temperature", label: "Temperatura" },
   { key: "humidity", label: "Humedad" },
-  { key: "light", label: "Iluminación" },
+  { key: "lux", label: "Iluminación" },
   { key: "noise", label: "Ruido" },
   { key: "airQuality", label: "Calidad de aire" },
 ];
@@ -29,7 +29,7 @@ export default function Dashboard() {
     const [historial, setHistorial] = useState<Record<Parametro, DatoAmbiental[]>>({
     temperature: [],
     humidity: [],
-    light: [],
+    lux: [],
     noise: [],
     airQuality: [],
     all: [],
@@ -107,7 +107,7 @@ export default function Dashboard() {
     const nuevosRangos: Record<Parametro, { min: number; max: number }> = {
         temperature: { min: 0, max: 0 },
         humidity: { min: 0, max: 0 },
-        light: { min: 0, max: 0 },
+        lux: { min: 0, max: 0 },
         noise: { min: 0, max: 0 },
         airQuality: { min: 0, max: 0 },
         all: { min: 0, max: 0 },

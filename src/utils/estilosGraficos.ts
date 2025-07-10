@@ -31,7 +31,7 @@ all: {
     ticks: [0, 20, 40, 60, 80, 100],
     formato: (value) => `${value}%`
   },
-  light: {
+  lux: {
     color: "var(--chart-5)",
     ticks: [0, 200, 400, 600, 800],
     formato: (value) => `${value} lx`

@@ -8,7 +8,7 @@ export interface DatoAmbiental {
 export type Parametro =
   | "temperature"
   | "humidity"
-  | "light"
+  | "lux"
   | "noise"
   | "airQuality"
   | "all";
@@ -16,7 +16,7 @@ export type Parametro =
 export const NOMBRES_PARAMETROS: Record<Parametro, string> = {
   temperature: "Temperatura",
   humidity: "Humedad",
-  light: "Iluminación",
+  lux: "Iluminación",
   noise: "Ruido",
   airQuality: "Calidad de aire",
   all: "Ambiente General",

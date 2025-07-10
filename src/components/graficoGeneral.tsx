@@ -20,7 +20,7 @@ export default function GraficoGeneral({ valores, historial }: Props) {
     "all",
     "temperature",
     "humidity",
-    "light",
+    "lux",
     "noise",
     "airQuality",
   ];
@@ -28,7 +28,7 @@ export default function GraficoGeneral({ valores, historial }: Props) {
   const nombresParametros: Record<Parametro, string> = {
     temperature: "Temperatura",
     humidity: "Humedad",
-    light: "Iluminación",
+    lux: "Iluminación",
     noise: "Ruido",
     airQuality: "Calidad del Aire",
     all: "Ambiente General",

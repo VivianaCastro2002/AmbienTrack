@@ -28,14 +28,14 @@ interface Sala {
 const UNIDADES: Record<string, string> = {
   temperature: "°C",
   humidity: "%",
-  light: "lux",
+  lux: "lux",
   noise: "pdm",
   airQuality: "AQI"
 }
 const NOMBRES_PARAMETROS: Record<string, string> = {
   temperature: "Temperatura",
   humidity: "Humedad",
-  light: "Luminosidad",
+  lux: "Luminosidad",
   noise: "Ruido",
   airQuality: "Calidad del Aire"
 }
@@ -99,7 +99,7 @@ export default function GestionSalas() {
     return {
       temperature: { min: 20, max: 24, unidad: "°C" },
       humidity: { min: 40, max: 60, unidad: "%" },
-      light: { min: 300, max: 500, unidad: "lux" },
+      lux: { min: 300, max: 500, unidad: "lux" },
       noise: { min: 0, max: 200, unidad: "pdm" },
       airQuality: { min: 0, max: 750, unidad: "AQI" }
     }

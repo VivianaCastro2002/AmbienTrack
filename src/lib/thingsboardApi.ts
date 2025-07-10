@@ -1,13 +1,13 @@
 const TB_BASE_URL = "http://iot.ceisufro.cl:8080";
 const TB_USERNAME = "v.castro05@ufromail.cl"; // Reemplaza por tu correo
 const TB_PASSWORD = "Vivi2002";         // Reemplaza por tu contraseña
-const KEYS = "temperature,humidity,light,noise,eCO2,TVOC";
+const KEYS = "temperature,humidity,lux,noise,eCO2,TVOC";
 
 // Tipo de datos retornados
 export interface TelemetriaAmbiental {
   temperature: number;
   humidity: number;
-  light: number;
+  lux: number;
   noise: number;
   airQuality: number;
 }
@@ -96,7 +96,7 @@ export async function obtenerUltimosValores(deviceId: string): Promise<Telemetri
   return {
     temperature: parseFloat(data.temperature?.[0]?.value ?? "0"),
     humidity: parseFloat(data.humidity?.[0]?.value ?? "0"),
-    light: parseFloat(data.light?.[0]?.value ?? "0"),
+    lux: parseFloat(data.lux?.[0]?.value ?? "0"),
     noise: parseFloat(data.noise?.[0]?.value ?? "0"),
     airQuality
   };

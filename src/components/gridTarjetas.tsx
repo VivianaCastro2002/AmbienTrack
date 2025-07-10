@@ -16,7 +16,7 @@ export default function GridTarjetas({ valores, rangosIdeales }: Props){
   const parametros = [
     { key: "temperature",  title: "Temperatura", icon:<Thermometer className="w-5 h-5"/>, unidad: "°" },
     { key: "humidity", title: "Humedad", icon:<Droplets className="w-5 h-5"/>, unidad: "%" },
-    { key: "light", title: "Iluminación", icon:<Lightbulb className="w-5 h-5"/>, unidad: "lux" },
+    { key: "lux", title: "Iluminación", icon:<Lightbulb className="w-5 h-5"/>, unidad: "lux" },
     { key: "noise", title: "Ruido", icon:<Volume2 className="w-5 h-5"/>, unidad: "pdm" },
     { key: "airQuality", title: "Calidad de Aire", icon:<Wind className="w-5 h-5"/>, unidad: "AQ" },
   ];

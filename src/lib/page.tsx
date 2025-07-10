@@ -13,7 +13,7 @@ import { recomendacionesPorParametro } from "@/utils/recomendacionesData";
 const PARAMETROS = [
   { key: "temperature", label: "Temperatura" },
   { key: "humidity", label: "Humedad" },
-  { key: "light", label: "Iluminación" },
+  { key: "lux", label: "Iluminación" },
   { key: "noise", label: "Ruido" },
   { key: "airQuality", label: "Calidad de aire" },
 ];
@@ -22,7 +22,7 @@ export default function Home() {
   const [valores, setValores] = useState<TelemetriaAmbiental>({
     temperature: 0,
     humidity: 0,
-    light: 0,
+    lux: 0,
     noise: 0,
     airQuality: 0,
   });
@@ -40,7 +40,7 @@ export default function Home() {
     const inicial: Record<Parametro, DatoAmbiental[]> = {
       temperature: getHistorial("temperature"),
       humidity: getHistorial("humidity"),
-      light: getHistorial("light"),
+      lux: getHistorial("lux"),
       noise: getHistorial("noise"),
       airQuality: getHistorial("airQuality"),
       all: [],
@@ -59,7 +59,7 @@ export default function Home() {
       const nuevoValores: Record<Parametro, number> = {
         temperature: valores.temperature ?? 0,
         humidity: valores.humidity ?? 0,
-        light: valores.light ?? 0,
+        lux: valores.lux ?? 0,
         noise: valores.noise ?? 0,
         airQuality: valores.airQuality ?? 0,
         all: 0,

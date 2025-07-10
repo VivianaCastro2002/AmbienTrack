@@ -41,7 +41,7 @@ export const recomendacionesPorParametro: Record<string, Record<string, string[]
     ]
   },
 
-  light: {
+  lux: {
     "muy baja": [
       "Encender luces adicionales",
       "Abrir cortinas o persianas",
