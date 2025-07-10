@@ -94,7 +94,7 @@ export default function GestionSalas() {
       temperature: { min: 20, max: 24, unidad: "°C" },
       humidity: { min: 40, max: 60, unidad: "%" },
       light: { min: 300, max: 500, unidad: "lux" },
-      noise: { min: 0, max: 50, unidad: "dB" },
+      noise: { min: 0, max: 50, unidad: "pdm" },
       airQuality: { min: 0, max: 50, unidad: "AQI" }
     }
   }
