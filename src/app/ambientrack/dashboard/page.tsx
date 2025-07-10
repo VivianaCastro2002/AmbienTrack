@@ -12,6 +12,15 @@ import { estilosPorParametro } from "@/utils/estilosGraficos"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Recomendaciones from "@/components/recomendaciones";
 import { recomendacionesPorParametro } from "@/utils/recomendacionesData";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+
 
 const PARAMETROS: { key: Exclude<Parametro, "all">; label: string }[] = [
   { key: "temperature", label: "Temperatura" },
@@ -194,6 +203,18 @@ export default function Dashboard() {
   return (
     <main className="items-center min-h-full sm:px-6 sm:py-3">
       <div className="px-6">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/ambientrack/gestion-salas">Gestión Salas</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/components">Components</BreadcrumbLink>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="w-full px-6">
             <TabsTrigger value="general">Vista General</TabsTrigger>

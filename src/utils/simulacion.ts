@@ -15,7 +15,7 @@ export class SimulacionApi {
           return Math.random() * (40 - 1) + 1;
         case "humidity":
           return Math.random() * 100;
-        case "light":
+        case "lux":
           return Math.random() * 800;
         case "noise":
           return Math.random() * 80;

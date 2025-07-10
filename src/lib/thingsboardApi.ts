@@ -1,6 +1,6 @@
-const TB_BASE_URL = "http://iot.ceisufro.cl:8080";
-const TB_USERNAME = "v.castro05@ufromail.cl"; // Reemplaza por tu correo
-const TB_PASSWORD = "Vivi2002";         // Reemplaza por tu contraseña
+const TB_BASE_URL = process.env.NEXT_PUBLIC_TB_BASE_URL!;
+const TB_USERNAME = process.env.NEXT_PUBLIC_TB_USERNAME!;
+const TB_PASSWORD = process.env.NEXT_PUBLIC_TB_PASSWORD!;
 const KEYS = "temperature,humidity,lux,noise,eCO2,TVOC";
 
 // Tipo de datos retornados
