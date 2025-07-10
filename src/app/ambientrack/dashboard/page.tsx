@@ -6,8 +6,20 @@ import { supabase } from "@/lib/supabaseClient"
 import GridTarjetas from "@/components/gridTarjetas"
 import { obtenerUltimosValores, TelemetriaAmbiental } from "@/lib/thingsboardApi"
 import GraficoGeneral from "@/components/graficoGeneral"
-import { Parametro, DatoAmbiental, calcularCondicionGeneral } from "@/utils/parametros"
+import { Parametro, DatoAmbiental, calcularCondicionGeneral, evaluarParametro } from "@/utils/parametros"
 import Alertas from "@/components/alertas"
+import { estilosPorParametro } from "@/utils/estilosGraficos"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import Recomendaciones from "@/components/recomendaciones";
+import { recomendacionesPorParametro } from "@/utils/recomendacionesData";
+
+const PARAMETROS: { key: Exclude<Parametro, "all">; label: string }[] = [
+  { key: "temperature", label: "Temperatura" },
+  { key: "humidity", label: "Humedad" },
+  { key: "light", label: "Iluminación" },
+  { key: "noise", label: "Ruido" },
+  { key: "airQuality", label: "Calidad de aire" },
+];
 
 export default function Dashboard() {
     const searchParams = useSearchParams()
@@ -23,6 +35,7 @@ export default function Dashboard() {
     all: [],
     });
     const [rangosIdeales, setRangosIdeales] = useState<Record<Parametro, { min: number; max: number }>>()
+    const [tab, setTab] = useState("general");
 
   useEffect(() => {
     let intervalo: NodeJS.Timeout
@@ -129,21 +142,91 @@ export default function Dashboard() {
     }
   }, [salaId])
 
+  // --- Lógica de alertas adaptada ---
+  function getAlerta(param: { key: Exclude<Parametro, "all">; label: string }) {
+    if (!valores || !rangosIdeales) return null;
+    const valor = valores[param.key];
+    const { min: idealMin, max: idealMax } = rangosIdeales[param.key];
+    const ticks = estilosPorParametro[param.key].ticks;
+    const minGrafico = Math.min(...ticks);
+    const maxGrafico = Math.max(...ticks);
+    const estado = evaluarParametro(valor, idealMin, idealMax, minGrafico, maxGrafico);
+    const estadoLower = estado.toLowerCase();
+    let variant: "advertencia" | "destructiva" = "advertencia";
+    if (estadoLower.includes("muy")) variant = "destructiva";
+    return {
+      mensaje: `${param.label} ${estadoLower}`,
+      variant,
+      mostrar: estadoLower !== "normal",
+    };
+  }
+
+  const mensajesAlerta = valores && rangosIdeales
+    ? PARAMETROS.map(getAlerta)
+        .filter((alerta) => alerta && alerta.mostrar)
+        .sort((a, b) => (a && b && a.variant === "destructiva" ? -1 : 1))
+    : [];
+
+  // --- Lógica de recomendaciones ---
+  function getRecomendacion(param: { key: Exclude<Parametro, "all">; label: string }) {
+    if (!valores || !rangosIdeales) return null;
+    const valor = valores[param.key];
+    const { min: idealMin, max: idealMax } = rangosIdeales[param.key];
+    const ticks = estilosPorParametro[param.key].ticks;
+    const minGrafico = Math.min(...ticks);
+    const maxGrafico = Math.max(...ticks);
+    const estado = evaluarParametro(valor, idealMin, idealMax, minGrafico, maxGrafico).toLowerCase();
+    const acciones = recomendacionesPorParametro[param.key]?.[estado];
+    if (acciones && acciones.length > 0) {
+      return {
+        titulo: `${param.label} ${estado}`,
+        acciones,
+        critica: estado.includes("muy"),
+      };
+    }
+    return null;
+  }
+
+  const recomendaciones = valores && rangosIdeales
+    ? (PARAMETROS.map(getRecomendacion).filter(Boolean) as { titulo: string; acciones: string[]; critica: boolean }[])
+    : [];
+
   return (
     <main className="items-center min-h-full sm:px-6 sm:py-3">
       <div className="px-6">
-        {loading && <p>Cargando datos...</p>}
-        {!loading && valores && rangosIdeales && (
-        <GridTarjetas valores={valores} rangosIdeales={rangosIdeales} />
-        )}
-        {!loading && valores && rangosIdeales && (
-        <GraficoGeneral
-            valores={valores}
-            historial={historial}
-            setHistorial={setHistorial}
-        />
-        )}
-        <Alertas></Alertas>
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList className="w-full px-6">
+            <TabsTrigger value="general">Vista General</TabsTrigger>
+            <TabsTrigger value="recomendaciones">Recomendaciones</TabsTrigger>
+          </TabsList>
+          <TabsContent value="general">
+            {loading && <p>Cargando datos...</p>}
+            {!loading && valores && rangosIdeales && (
+              <GridTarjetas valores={valores} rangosIdeales={rangosIdeales} />
+            )}
+            {!loading && valores && rangosIdeales && (
+              <GraficoGeneral
+                valores={valores}
+                historial={historial}
+                setHistorial={setHistorial}
+              />
+            )}
+            {/* Renderizado de alertas */}
+            {mensajesAlerta.map((alerta, idx) => (
+              alerta && (
+                <Alertas
+                  key={idx}
+                  mensaje={alerta.mensaje}
+                  variant={alerta.variant}
+                  onVerRecomendaciones={() => setTab("recomendaciones")}
+                />
+              )
+            ))}
+          </TabsContent>
+          <TabsContent value="recomendaciones">
+            <Recomendaciones recomendaciones={recomendaciones} />
+          </TabsContent>
+        </Tabs>
       </div>
     </main>
   )
