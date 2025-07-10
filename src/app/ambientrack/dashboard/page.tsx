@@ -45,6 +45,7 @@ export default function Dashboard() {
     });
     const [rangosIdeales, setRangosIdeales] = useState<Record<Parametro, { min: number; max: number }>>()
     const [tab, setTab] = useState("general");
+    const [nombreSala, setNombreSala] = useState<string>("");
 
   useEffect(() => {
     let intervalo: NodeJS.Timeout
@@ -102,7 +103,7 @@ export default function Dashboard() {
 
     const { data, error } = await supabase
         .from("sala")
-        .select(`thingsboard_device_id,parametro_sala (tipo, valor_min, valor_max)`)
+        .select(`thingsboard_device_id,parametro_sala (tipo, valor_min, valor_max), nombre`)
         .eq("id", salaId)
         .single();
 
@@ -111,6 +112,8 @@ export default function Dashboard() {
         setLoading(false);
         return;
     }
+
+    setNombreSala(data.nombre || "");
 
     // Convertir los rangos ideales desde la base de datos
     const nuevosRangos: Record<Parametro, { min: number; max: number }> = {
@@ -203,14 +206,14 @@ export default function Dashboard() {
   return (
     <main className="items-center min-h-full sm:px-6 sm:py-3">
       <div className="px-6">
-        <Breadcrumb>
+        <Breadcrumb className="py-4">
           <BreadcrumbList>
-            <BreadcrumbItem>
+            <BreadcrumbItem >
               <BreadcrumbLink href="/ambientrack/gestion-salas">Gestión Salas</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink href="/components">Components</BreadcrumbLink>
+              <BreadcrumbPage>{nombreSala || "Sala"}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
