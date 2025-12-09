@@ -88,15 +88,21 @@ export default function Dashboard() {
               // Update historial
               const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
+              const datosParaCalculo = Object.fromEntries(
+                Object.entries(datos).filter(([key]) => key !== 'timestamp')
+              ) as Record<Parametro, number>;
+
+              const condicionGeneral = calcularCondicionGeneral(datosParaCalculo, rangos);
+
               setHistorial(prev => {
                 const nuevo = { ...prev }
                 Object.entries(datos).forEach(([key, value]) => {
                   if (key !== 'timestamp' && key in nuevo) {
                     const p = key as Parametro
-                    // Keep last 20 points
                     nuevo[p] = [...nuevo[p], { hora, valor: value as number }].slice(-20)
                   }
                 })
+                nuevo['all'] = [...nuevo['all'], { ...condicionGeneral, hora }].slice(-20)
                 return nuevo
               })
 
@@ -114,7 +120,7 @@ export default function Dashboard() {
                   const minGrafico = Math.min(...ticks)
                   const maxGrafico = Math.max(...ticks)
 
-                  const evaluacion = evaluarParametro(tipo as any, value as number, rango.min, rango.max, minGrafico, maxGrafico)
+                  const evaluacion = evaluarParametro(value as number, rango.min, rango.max, minGrafico, maxGrafico)
 
                   if (evaluacion !== 'Normal') {
                     nuevasAlertas.push({
