@@ -1,7 +1,5 @@
 const TB_BASE_URL = process.env.NEXT_PUBLIC_TB_BASE_URL!;
-const TB_USERNAME = process.env.NEXT_PUBLIC_TB_USERNAME!;
-const TB_PASSWORD = process.env.NEXT_PUBLIC_TB_PASSWORD!;
-const KEYS = "temperature,humidity,lux,noise,eCO2,TVOC";
+const KEYS = "bme_temp_c,bme_hum_pct,bh1750_lux,noise,sgp30_eco2_ppm,sgp30_tvoc_ppb";
 
 export interface TelemetriaAmbiental {
   temperature: number;
@@ -11,88 +9,35 @@ export interface TelemetriaAmbiental {
   airQuality: number;
 }
 
-let authToken: string | null = null;
-let refreshToken: string | null = null;
-let tokenExpiraEn: number = 0; 
+export async function obtenerUltimosValores(deviceId: string, token: string): Promise<TelemetriaAmbiental> {
+  // Asegurarse de que el token tenga el prefijo Bearer si no lo tiene
+  const authHeader = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
 
-
-async function loginThingsBoard(): Promise<void> {
-  const res = await fetch(`${TB_BASE_URL}/api/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json"
-    },
-    body: JSON.stringify({
-      username: TB_USERNAME,
-      password: TB_PASSWORD
-    })
-  });
-
-  if (!res.ok) throw new Error("Login ThingsBoard fallido");
-
-  const data = await res.json();
-  authToken = data.token;
-  refreshToken = data.refreshToken;
-  tokenExpiraEn = Date.now() + 14 * 60 * 1000; 
-}
-
-async function refrescarToken(): Promise<void> {
-  if (!refreshToken) return loginThingsBoard();
-
-  const res = await fetch(`${TB_BASE_URL}/api/auth/token`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Authorization": `Bearer ${authToken}`
-    },
-    body: JSON.stringify({
-      refreshToken: refreshToken
-    })
-  });
-
-  if (!res.ok) return loginThingsBoard();
-
-  const data = await res.json();
-  authToken = data.token;
-  refreshToken = data.refreshToken;
-  tokenExpiraEn = Date.now() + 14 * 60 * 1000;
-}
-
-
-async function asegurarTokenValido(): Promise<void> {
-  if (!authToken || Date.now() > tokenExpiraEn) {
-    if (refreshToken) {
-      await refrescarToken();
-    } else {
-      await loginThingsBoard();
-    }
-  }
-}
-
-export async function obtenerUltimosValores(deviceId: string): Promise<TelemetriaAmbiental> {
-  await asegurarTokenValido();
-
+  // Usamos la API de Plugins de Telemetría (Requiere autenticación de usuario y Device ID)
   const res = await fetch(`${TB_BASE_URL}/api/plugins/telemetry/DEVICE/${deviceId}/values/timeseries?keys=${KEYS}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "X-Authorization": `Bearer ${authToken}`
+      "X-Authorization": authHeader
     }
   });
 
-  if (!res.ok) throw new Error("Error al obtener datos de ThingsBoard");
+  if (!res.ok) {
+    if (res.status === 401) throw new Error("Token expirado o inválido");
+    if (res.status === 404) throw new Error("Dispositivo no encontrado");
+    throw new Error(`Error ThingsBoard: ${res.status}`);
+  }
 
   const data = await res.json();
 
-  const eco2 = parseFloat(data.eCO2?.[0]?.value ?? "0");
-  const tvoc = parseFloat(data.TVOC?.[0]?.value ?? "0");
+  const eco2 = parseFloat(data.sgp30_eco2_ppm?.[0]?.value ?? "0");
+  const tvoc = parseFloat(data.sgp30_tvoc_ppb?.[0]?.value ?? "0");
   const airQuality = (eco2 + tvoc) / 2;
 
   return {
-    temperature: parseFloat(data.temperature?.[0]?.value ?? "0"),
-    humidity: parseFloat(data.humidity?.[0]?.value ?? "0"),
-    lux: parseFloat(data.lux?.[0]?.value ?? "0"),
+    temperature: parseFloat(data.bme_temp_c?.[0]?.value ?? "0"),
+    humidity: parseFloat(data.bme_hum_pct?.[0]?.value ?? "0"),
+    lux: parseFloat(data.bh1750_lux?.[0]?.value ?? "0"),
     noise: parseFloat(data.noise?.[0]?.value ?? "0"),
     airQuality
   };
