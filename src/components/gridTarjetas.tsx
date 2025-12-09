@@ -34,13 +34,17 @@ export default function GridTarjetas({ valores, rangosIdeales }: Props){
           Math.min(...config.ticks),
           Math.max(...config.ticks)
         );
+        let valorMostrar: string | number = valorActual;
+        if (param.key === "temperature" || param.key === "humidity" || param.key === "lux" || param.key === "noise" || param.key === "airQuality") {
+            valorMostrar = Number(valorActual).toFixed(0);
+        }
 
         return (
           <TarjetaEstado
             key={param.key}
             title={param.title}
             icon={param.icon}
-            valor={`${valorActual}${param.unidad}`}
+            valor={`${valorMostrar}${param.unidad}`}
             estado={estadoActual}
           />
         );

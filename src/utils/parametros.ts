@@ -42,7 +42,7 @@ export function evaluarParametro(
 export function obtenerEstrato(estado: string): 3 | 2 | 1 {
   const e = estado.trim().toLowerCase();
   if (e === "normal") return 3;
-  if (e === "alto" || e === "bajo") return 2;
+  if (e === "alto" || e === "bajo" || e === "alta" || e === "baja") return 2;
   if (e.startsWith("muy")) return 1;
   return 3;
 }
