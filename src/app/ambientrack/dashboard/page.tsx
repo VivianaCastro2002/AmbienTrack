@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import GridTarjetas from "@/components/gridTarjetas"
 import { obtenerUltimosValores, TelemetriaAmbiental } from "@/lib/thingsboardApi"
 import GraficoGeneral from "@/components/graficoGeneral"
-import { Parametro, DatoAmbiental, calcularCondicionGeneral, evaluarParametro } from "@/utils/parametros"
+import { Parametro, DatoAmbiental, calcularCondicionGeneral, evaluarParametro, NOMBRES_PARAMETROS } from "@/utils/parametros"
 import Alertas from "@/components/alertas"
 import { estilosPorParametro } from "@/utils/estilosGraficos"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -31,17 +31,39 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [valores, setValores] = useState<TelemetriaAmbiental | null>(null)
   const [rangosIdeales, setRangosIdeales] = useState<any>(null)
-  const [historial, setHistorial] = useState<any[]>([])
+
+  // Historial typed correctly
+  const [historial, setHistorial] = useState<Record<Parametro, DatoAmbiental[]>>({
+    temperature: [],
+    humidity: [],
+    lux: [],
+    noise: [],
+    airQuality: [],
+    all: []
+  })
+
   const [mensajesAlerta, setMensajesAlerta] = useState<{ mensaje: string; variant: "destructive" | "warning" }[]>([])
   const [recomendaciones, setRecomendaciones] = useState<any[]>([])
   const [salaNombre, setSalaNombre] = useState("")
 
+  // Ref to keep track of interval
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
   useEffect(() => {
     cargarDatosSala()
+
+    // Set up polling every 5 seconds
+    intervalRef.current = setInterval(() => {
+      cargarDatosSala(false) // Pass false to avoid showing loading spinner on updates
+    }, 5000)
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
   }, [])
 
-  const cargarDatosSala = async () => {
-    setLoading(true)
+  const cargarDatosSala = async (showLoading = true) => {
+    if (showLoading) setLoading(true)
     try {
       // 1. Cargar configuración de sala desde LocalStorage
       const sala = getSalaConfig()
@@ -52,7 +74,7 @@ export default function Dashboard() {
         // 2. Cargar parámetros ideales
         const rangos: any = {}
         Object.entries(sala.parametros).forEach(([tipo, p]) => {
-          rangos[tipo] = { min: p.min, max: p.max }
+          rangos[tipo] = { min: parseFloat(String(p.min)), max: parseFloat(String(p.max)) }
         })
         setRangosIdeales(rangos)
 
@@ -62,6 +84,22 @@ export default function Dashboard() {
             const datos = await obtenerUltimosValores(sala.deviceId, sala.accessToken)
             if (datos) {
               setValores(datos)
+
+              // Update historial
+              const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+
+              setHistorial(prev => {
+                const nuevo = { ...prev }
+                Object.entries(datos).forEach(([key, value]) => {
+                  if (key !== 'timestamp' && key in nuevo) {
+                    const p = key as Parametro
+                    // Keep last 20 points
+                    nuevo[p] = [...nuevo[p], { hora, valor: value as number }].slice(-20)
+                  }
+                })
+                return nuevo
+              })
+
               // Generar alertas y recomendaciones
               const nuevasAlertas: any[] = []
               const nuevasRecomendaciones: any[] = []
@@ -75,6 +113,7 @@ export default function Dashboard() {
                   const ticks = estilosPorParametro[tipo].ticks
                   const minGrafico = Math.min(...ticks)
                   const maxGrafico = Math.max(...ticks)
+
                   const evaluacion = evaluarParametro(tipo as any, value as number, rango.min, rango.max, minGrafico, maxGrafico)
 
                   if (evaluacion !== 'Normal') {
@@ -86,10 +125,15 @@ export default function Dashboard() {
                     // Buscar recomendaciones
                     const recs = recomendacionesPorParametro[tipo]
                     if (recs) {
-                      if (evaluacion === 'Muy Alta' || evaluacion === 'Muy Baja') {
-                        nuevasRecomendaciones.push(...recs.critico)
-                      } else {
-                        nuevasRecomendaciones.push(...recs.advertencia)
+                      const key = evaluacion.toLowerCase()
+                      const recomendacionesEncontradas = recs[key]
+
+                      if (recomendacionesEncontradas && Array.isArray(recomendacionesEncontradas)) {
+                        nuevasRecomendaciones.push({
+                          titulo: `${NOMBRES_PARAMETROS[tipo]} (${evaluacion})`,
+                          acciones: recomendacionesEncontradas,
+                          critica: evaluacion === 'Muy Alta' || evaluacion === 'Muy Baja'
+                        })
                       }
                     }
                   }
@@ -106,7 +150,7 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Error cargando datos:", error)
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 

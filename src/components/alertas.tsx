@@ -3,19 +3,19 @@ import { Button } from "./ui/button";
 import { AlertTriangle, OctagonAlert, ChevronRight } from "lucide-react";
 
 interface AlertasProps {
-  variant?: "advertencia" | "destructiva";
+  variant?: "warning" | "destructive";
   mensaje: string;
   onVerRecomendaciones?: () => void;
 }
 
 const estilos = {
-  advertencia: {
+  warning: {
     alert: "bg-yellow-50 border-yellow-200 text-yellow-500",
     icon: <AlertTriangle className="w-6 h-6" />,
     title: "Advertencia",
     button: "hover:bg-yellow-100 hover:text-yellow-600",
   },
-  destructiva: {
+  destructive: {
     alert: "bg-red-50 border-red-200 text-red-500",
     icon: <OctagonAlert className="w-6 h-6" />,
     title: "Alerta",
@@ -24,7 +24,7 @@ const estilos = {
 };
 
 export default function Alertas({
-  variant = "advertencia",
+  variant = "warning",
   mensaje,
   onVerRecomendaciones,
 }: AlertasProps) {
@@ -33,7 +33,7 @@ export default function Alertas({
   return (
     <Alert
       className={`flex mb-1 py-2 justify-between items-center ${estilo.alert}`}
-      variant={variant === "destructiva" ? "destructive" : undefined}
+      variant={variant === "destructive" ? "destructive" : undefined}
     >
       <div className="flex items-center space-x-4">
         {estilo.icon}
