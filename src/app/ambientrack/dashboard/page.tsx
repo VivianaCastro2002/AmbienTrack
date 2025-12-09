@@ -118,7 +118,7 @@ export default function Dashboard() {
 
                   if (evaluacion !== 'Normal') {
                     nuevasAlertas.push({
-                      mensaje: evaluacion,
+                      mensaje: `${NOMBRES_PARAMETROS[tipo]}: ${evaluacion}`,
                       variant: evaluacion === 'Muy Alta' || evaluacion === 'Muy Baja' ? 'destructive' : 'warning'
                     })
 
